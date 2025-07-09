@@ -1,3 +1,152 @@
-body{
-    background-color: #404258;
+:root {
+    --nav-height: 60px;
+    --bg-color: #ffffff;
+    --accent: #0077ff;
+    --text-color: #333;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+
+/* Reset & basic */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; }
+
+/* Navbar container */
+.navbar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--nav-height);
+    padding: 0 2rem;
+    background: var(--bg-color);
+    box-shadow: 0 2px 4px var(--shadow);
+    z-index: 100;
+}
+
+/* Logo */
+.navbar .logo {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+/* Links */
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 500;
+    position: relative;
+    padding: 0.25rem;
+    transition: color 0.2s;
+}
+
+/* Hover underline effect */
+.nav-links a::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0%;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.2s;
+}
+
+.nav-links a:hover {
+    color: var(--accent);
+}
+
+.nav-links a:hover::after {
+    width: 100%;
+}
+
+/* Hamburger (hidden on desktop) */
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.hamburger,
+.hamburger::before,
+.hamburger::after {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background: var(--text-color);
+    border-radius: 2px;
+    position: relative;
+}
+
+.hamburger::before,
+.hamburger::after {
+    content: "";
+    position: absolute;
+}
+
+.hamburger::before { top: -8px; }
+.hamburger::after  { top: 8px; }
+
+/* ----------------------------- */
+
+.videos-home{}
+
+.video-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 150px); /*repeat(auto-fit, minmax(300px, 1fr));*/
+    grid-auto-rows: 200px;
+    justify-content: start;
+    gap: 20px;
+    padding: 20px;
+    list-style: none;
+    margin: 0;
+}
+
+.video-links a{
+    text-decoration: none;
+    color: black;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    overflow: hidden; /* Ensures video stays within bounds */
+    display: block; /* Makes the entire item clickable */
+    height: 100%;
+}
+
+.video-links a:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    transition: all 0.2s ease-in-out;
+}
+
+
+
+@media (max-width: 768px) {
+    .nav-toggle {
+        display: block;
+    }
+    .nav-links {
+        position: absolute;
+        top: var(--nav-height);
+        right: 0;
+        background: var(--bg-color);
+        flex-direction: column;
+        width: 200px;
+        padding: 1rem;
+        box-shadow: -2px 2px 8px var(--shadow);
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+    }
+    .nav-links.open {
+        transform: translateX(0);
+    }
 }

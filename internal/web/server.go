@@ -59,6 +59,7 @@ func (s *server) Start(lis net.Listener) error {
 	s.mux.HandleFunc("/videos/", s.handleVideo)
 	s.mux.HandleFunc("/content/", s.handleVideoContent)
 	s.mux.HandleFunc("/", s.handleIndex)
+	s.mux.HandleFunc("/upload-page", s.handleUploadPage)
 
 	return http.Serve(lis, s.mux)
 }
@@ -85,6 +86,16 @@ func (s *server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	// use s to read stored files?
 	if err := tmpl.Execute(w, videosList); err != nil {
+		http.Error(w, "Template Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.New("templates").Parse(uploadpageHTML))
+
+	// use s to read stored files?
+	if err := tmpl.Execute(w, nil); err != nil {
 		http.Error(w, "Template Error", http.StatusInternalServerError)
 		return
 	}
