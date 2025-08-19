@@ -20,9 +20,10 @@ var _ VideoMetadataService = (*SQLiteVideoMetadataService)(nil)
 func (s *SQLiteVideoMetadataService) Read(id string) (*VideoMetadata, error) {
 	var videoID string
 	var uploadedAt string
+	var title string
 
 	row := s.DB.QueryRow("SELECT * FROM metadata WHERE id = ?", id)
-	err := row.Scan(&videoID, &uploadedAt)
+	err := row.Scan(&videoID, &uploadedAt, &title)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
@@ -39,6 +40,7 @@ func (s *SQLiteVideoMetadataService) Read(id string) (*VideoMetadata, error) {
 	videoMetadata := &VideoMetadata{
 		Id:         videoID,
 		UploadedAt: parsedTime,
+		Title:      title,
 	}
 
 	return videoMetadata, nil
@@ -57,17 +59,17 @@ func (s *SQLiteVideoMetadataService) List() ([]VideoMetadata, error) {
 		var video VideoMetadata
 
 		var uploadtime string
-		err = rows.Scan(&video.Id, &uploadtime)
+		err = rows.Scan(&video.Id, &uploadtime, &video.Title)
 		if err != nil {
 			log.Printf("Error scanning row: %v", err)
 			return nil, err
 		}
 
-		time, err := time.Parse("2006-01-02 15:04:05", uploadtime)
+		parsedTime, err := time.Parse("2006-01-02 15:04:05", uploadtime)
 		if err != nil {
 			log.Printf("Error parsing time string: %v", err)
 		}
-		video.UploadedAt = time
+		video.UploadedAt = parsedTime
 
 		videos = append(videos, video)
 	}
@@ -79,8 +81,8 @@ func (s *SQLiteVideoMetadataService) List() ([]VideoMetadata, error) {
 	return videos, nil
 }
 
-func (s *SQLiteVideoMetadataService) Create(videoId string, uploadedAt time.Time) error {
-	_, err := s.DB.Exec("INSERT INTO metadata (id, uploaded_at) VALUES (?, ?)", videoId, uploadedAt.Format("2006-01-02 15:04:05"))
+func (s *SQLiteVideoMetadataService) Create(videoId string, uploadedAt time.Time, title string) error {
+	_, err := s.DB.Exec("INSERT INTO metadata (id, uploaded_at, title) VALUES (?, ?, ?)", videoId, uploadedAt.Format("2006-01-02 15:04:05"), title)
 	if err != nil {
 		return err
 	}

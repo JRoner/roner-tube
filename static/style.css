@@ -96,40 +96,6 @@ body { font-family: system-ui, sans-serif; }
 .hamburger::before { top: -8px; }
 .hamburger::after  { top: 8px; }
 
-/* ----------------------------- */
-
-.videos-home{}
-
-.video-links {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, 150px); /*repeat(auto-fit, minmax(300px, 1fr));*/
-    grid-auto-rows: 200px;
-    justify-content: start;
-    gap: 20px;
-    padding: 20px;
-    list-style: none;
-    margin: 0;
-}
-
-.video-links a{
-    text-decoration: none;
-    color: black;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    overflow: hidden; /* Ensures video stays within bounds */
-    display: block; /* Makes the entire item clickable */
-    height: 100%;
-}
-
-.video-links a:hover {
-    background-color: #f0f0f0;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-    transition: all 0.2s ease-in-out;
-}
-
-
-
 @media (max-width: 768px) {
     .nav-toggle {
         display: block;
@@ -150,3 +116,146 @@ body { font-family: system-ui, sans-serif; }
         transform: translateX(0);
     }
 }
+
+/* ------------------------------------------------- */
+
+.videos-home{
+    display: flex;
+    justify-content: center;  /* horizontal centering */
+    align-items: start;      /* vertical centering */
+    height: auto;            /* full viewport height */
+    margin: 0;
+}
+
+.video-links {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    justify-content: start;
+    gap: 20px;
+    padding: 20px;
+    list-style: none;
+    margin: 0;
+}
+
+.video-links a{
+    text-decoration: none;
+    color: black;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    overflow: hidden; /* Ensures video stays within bounds */
+    display: block; /* Makes the entire item clickable */
+    aspect-ratio: 4/5;
+}
+
+.video-links a:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    transition: all 0.2s ease-in-out;
+}
+
+.video-links a img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-links .video-title {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right:0;
+    padding: 0.5em;
+    background: var(--shadow);
+    color: white;
+    font-size: 0.9em;
+    text-align: center;
+    opacity: 0;
+    transition: transform .2s;
+    transform: translateY(100%); /* slide it down out of view */
+
+}
+
+.video-links a:hover .video-title {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ------------------------------------------------- */
+
+
+/* 1. Constrain form width */
+.video-upload form {
+    max-width: 500px;
+    margin: 2rem auto;    /* center the form horizontally on the page */
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;  /* left-align everything */
+    gap: 1rem;                /* consistent vertical spacing */
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+/* 2. Make each label/input group its own block */
+.video-upload form label {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    text-align: left;
+}
+
+/* 3. Stretch inputs & textarea to fill the label width */
+.video-upload form input[type="file"],
+.video-upload form input[type="text"],
+.video-upload form textarea {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;   /* small gap between text and control */
+    padding: 0.5rem;
+    font-size: 1rem; /* about 14px if your root is 16px */
+    line-height: 1.2;    /* optional, for better readability */
+}
+
+/* 4. Space out your buttons too */
+.video-upload form input[type="submit"],
+.video-upload form input[type="reset"] {
+    margin-right: 1rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+}
+
+.upload-buttons{
+    display: inline-flex;
+}
+
+.uploading{
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 1rem;
+}
+
+.loader {
+    border: 10px solid #f3f3f3; /* Light grey */
+    border-top: 10px solid var(--accent); /* Blue */
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    animation: spin 2s linear infinite;
+
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+/* ------------------------------------------------- */
+
+

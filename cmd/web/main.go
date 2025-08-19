@@ -80,7 +80,8 @@ func main() {
 		createTableCommand := `
 		CREATE TABLE metadata (
        	id TEXT PRIMARY KEY,
-       	uploaded_at TEXT NOT NULL
+       	uploaded_at TEXT NOT NULL,
+       	title TEXT NOT NULL
      );`
 		_, err := db.Exec(createTableCommand)
 		if err != nil {
@@ -99,12 +100,16 @@ func main() {
 	// Construct content service
 	var contentService web.VideoContentService
 	fmt.Println("Creating content service of type", contentServiceType, "with options", contentServiceOptions)
-	// TODO: Implement content service creation logic
 
 	err = os.MkdirAll(contentServiceOptions, 0755)
 	if err != nil {
 		log.Printf("Failed to create content directory: %v", err)
 		return
+	}
+
+	err = os.MkdirAll("thumbnails", 0755)
+	if err != nil {
+		log.Printf("Failed to create thumbnail directory: %v", err)
 	}
 
 	contentService = &web.FSVideoContentService{

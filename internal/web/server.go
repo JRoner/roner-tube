@@ -3,6 +3,9 @@
 package web
 
 import (
+	"encoding/base64"
+	"fmt"
+	"github.com/google/uuid"
 	"html/template"
 	"io"
 	"log"
@@ -17,7 +20,7 @@ import (
 	"time"
 )
 
-type server struct {
+type Server struct {
 	Addr string
 	Port int
 
@@ -31,29 +34,42 @@ type VideoList struct {
 	Id         string
 	UploadTime string
 	EscapedId  string
+	Title      string
 }
 
 type Video struct {
 	Id         string
 	UploadedAt string
+	Title      string
+}
+
+func generateUID() string {
+
+	u := uuid.New() // 16 raw bytes
+	b64 := base64.RawURLEncoding.EncodeToString(u[:])
+	log.Println("Generated UID for video:", b64)
+	return b64
 }
 
 func NewServer(
 	metadataService VideoMetadataService,
 	contentService VideoContentService,
-) *server {
-	return &server{
+) *Server {
+	return &Server{
 		metadataService: metadataService,
 		contentService:  contentService,
 	}
 }
 
-func (s *server) Start(lis net.Listener) error {
+func (s *Server) Start(lis net.Listener) error {
 	s.mux = http.NewServeMux()
 
 	// For css handler
 	fs := http.FileServer(http.Dir("static"))
 	s.mux.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	thumbDir := http.FileServer(http.Dir("thumbnails"))
+	s.mux.Handle("/thumbnails/", http.StripPrefix("/thumbnails/", thumbDir))
 
 	s.mux.HandleFunc("/upload", s.handleUpload)
 	s.mux.HandleFunc("/videos/", s.handleVideo)
@@ -64,7 +80,7 @@ func (s *server) Start(lis net.Listener) error {
 	return http.Serve(lis, s.mux)
 }
 
-func (s *server) handleIndex(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.New("templates").Parse(indexHTML))
 
 	videos, err := s.metadataService.List()
@@ -80,6 +96,7 @@ func (s *server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		vid.Id = video.Id
 		vid.EscapedId = url.PathEscape(video.Id)
 		vid.UploadTime = video.UploadedAt.Format("2006-01-02 15:04:05")
+		vid.Title = video.Title
 
 		videosList = append(videosList, vid)
 	}
@@ -91,7 +108,7 @@ func (s *server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.New("templates").Parse(uploadpageHTML))
 
 	// use s to read stored files?
@@ -101,7 +118,7 @@ func (s *server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	currentTime := time.Now() //Upload time
 
 	if r.Method != "POST" {
@@ -116,16 +133,26 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get video file
 	file, hdr, err := r.FormFile("file")
 	if err != nil {
 		log.Println("Upload error: FormFile:", err)
 		http.Error(w, "Missing file", http.StatusBadRequest)
 		return
 	}
+
 	defer file.Close()
 
-	baseName := hdr.Filename
-	id := strings.TrimSuffix(baseName, filepath.Ext(baseName)) //Get the file ending (.mp4) and remove it
+	// Set title for video
+	title := r.FormValue("title")
+	if title == "" {
+		http.Error(w, "Missing title", http.StatusBadRequest)
+	}
+
+	//baseName := hdr.Filename
+	//id := strings.TrimSuffix(baseName, filepath.Ext(baseName)) //Get the file ending (.mp4) and remove it
+
+	id := generateUID()
 
 	// Here we check that the read did not fail and then check that the video does not exist already
 	if existing, err := s.metadataService.Read(id); err != nil {
@@ -173,6 +200,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		"-b:v", "3000k", // video bitrate
 		"-b:a", "128k", // audio bitrate
 		"-f", "dash", // dash format
+		"-progress", "pipe:1", // ADDED FOR PROGRESS BAR IN UPLOAD PAGE
 		"-use_timeline", "1", // use timeline
 		"-use_template", "1", // use template
 		"-init_seg_name", "init-$RepresentationID$.m4s", // init segment naming
@@ -186,6 +214,25 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		log.Println("Upload error: ffmpeg failed:", err)
 		http.Error(w, "Upload error", http.StatusInternalServerError)
 		return
+	}
+
+	//thumbfile, thumbhdr, err := r.FormFile("thumbnail")
+	//if err != nil {
+	//	log.Println("Upload error: FormThumbnailFile:", err)
+	//	http.Error(w, "Failed to get thumbnail", http.StatusBadRequest)
+	//	return
+	//}
+	//defer file.Close()
+
+	thumbPath := fmt.Sprintf("thumbnails/%s.jpg", id)
+	cmd = exec.Command(
+		"ffmpeg", "-i", tempPath,
+		"-ss", "00:00:00", // 0 seconds in
+		"-frames:v", "1", // grab exactly 1 frame
+		thumbPath,
+	)
+	if err := cmd.Run(); err != nil {
+		log.Println("thumbnail failed:", err)
 	}
 
 	// write to content service
@@ -221,7 +268,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//record the metadata, make sure we don't fail
-	if err := s.metadataService.Create(id, currentTime); err != nil {
+	if err := s.metadataService.Create(id, currentTime, title); err != nil {
 		http.Error(w, "Failed to create metadata", http.StatusInternalServerError)
 		return
 	}
@@ -230,12 +277,13 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (s *server) handleVideo(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleVideo(w http.ResponseWriter, r *http.Request) {
 	videoId := r.URL.Path[len("/videos/"):]
 	log.Println("Video ID:", videoId)
 
 	data, err := s.metadataService.Read(videoId)
 	if err != nil {
+		log.Println("Failed to read metadata:", err)
 		http.Error(w, "Failed to read metadata", http.StatusInternalServerError)
 		return
 	}
@@ -255,6 +303,7 @@ func (s *server) handleVideo(w http.ResponseWriter, r *http.Request) {
 
 	vid.Id = videoId
 	vid.UploadedAt = video.UploadedAt.Format("2006-01-02 15:04:05")
+	vid.Title = video.Title
 
 	if err := tmpl.Execute(w, vid); err != nil {
 		http.Error(w, "Template Error", http.StatusInternalServerError)
@@ -263,7 +312,7 @@ func (s *server) handleVideo(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (s *server) handleVideoContent(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleVideoContent(w http.ResponseWriter, r *http.Request) {
 	// parse /content/<videoId>/<filename>
 	videoId := r.URL.Path[len("/content/"):]
 	parts := strings.Split(videoId, "/")

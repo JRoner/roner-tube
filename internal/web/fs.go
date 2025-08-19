@@ -64,3 +64,15 @@ func (s *FSVideoContentService) Write(videoId string, filename string, data []by
 
 	return nil
 }
+
+func (s *FSVideoContentService) ReadThumbnail(videoId string) string {
+	imagePath := s.FilePath + "/" + "thumbnails" + "/" + videoId + ".jpg"
+
+	if _, err := os.Stat(imagePath); os.IsNotExist(err) {
+		log.Println("Thumbnail does not exist: ", imagePath)
+		defaultPath := s.FilePath + "/" + "thumbnails" + "/" + "default.jpg"
+		return defaultPath
+	}
+
+	return imagePath
+}
