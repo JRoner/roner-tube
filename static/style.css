@@ -1,15 +1,19 @@
 :root {
     --nav-height: 60px;
-    --bg-color: #ffffff;
+    --bg-color: #292929;
     --accent: #0077ff;
-    --text-color: #333;
-    --shadow: rgba(0, 0, 0, 0.1);
+    --text-color: #fff;
+    --shadow: rgba(212, 212, 212, 0.1);
 }
 
 
 /* Reset & basic */
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, sans-serif; }
+body { 
+    font-family: system-ui, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
 
 /* Navbar container */
 .navbar {
@@ -37,7 +41,9 @@ body { font-family: system-ui, sans-serif; }
     list-style: none;
     display: flex;
     gap: 1.5rem;
+    
 }
+
 
 .nav-links a {
     text-decoration: none;
@@ -68,7 +74,7 @@ body { font-family: system-ui, sans-serif; }
     width: 100%;
 }
 
-/* Hamburger (hidden on desktop) */
+/* Hamburger */
 .nav-toggle {
     display: none;
     background: none;
@@ -131,14 +137,19 @@ body { font-family: system-ui, sans-serif; }
 }
 
 .video-links {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
     width: 100%;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    max-width: 1800px;
     justify-content: start;
     gap: 20px;
     padding: 20px;
     list-style: none;
-    margin: 0;
+    margin: auto;
+}
+
+.video-links li {
+    width: fit-content;
 }
 
 .video-links a{
@@ -146,6 +157,7 @@ body { font-family: system-ui, sans-serif; }
     color: black;
     border: 1px solid #ddd;
     border-radius: 5px;
+    max-width: 200px; /* completely arbitrary value I picked :P */
     overflow: hidden; /* Ensures video stays within bounds */
     display: block; /* Makes the entire item clickable */
     aspect-ratio: 4/5;
@@ -189,7 +201,7 @@ body { font-family: system-ui, sans-serif; }
 /* ------------------------------------------------- */
 
 
-/* 1. Constrain form width */
+/* Constrain form width */
 .video-upload form {
     max-width: 500px;
     margin: 2rem auto;    /* center the form horizontally on the page */
@@ -202,7 +214,7 @@ body { font-family: system-ui, sans-serif; }
     border-radius: 5px;
 }
 
-/* 2. Make each label/input group its own block */
+/* Make each label/input group its own block */
 .video-upload form label {
     display: flex;
     flex-direction: column;
@@ -210,7 +222,7 @@ body { font-family: system-ui, sans-serif; }
     text-align: left;
 }
 
-/* 3. Stretch inputs & textarea to fill the label width */
+/* Stretch inputs & textarea to fill the label width */
 .video-upload form input[type="file"],
 .video-upload form input[type="text"],
 .video-upload form textarea {
@@ -218,11 +230,11 @@ body { font-family: system-ui, sans-serif; }
     width: 100%;
     margin-top: 0.5rem;   /* small gap between text and control */
     padding: 0.5rem;
-    font-size: 1rem; /* about 14px if your root is 16px */
-    line-height: 1.2;    /* optional, for better readability */
+    font-size: 1rem; 
+    line-height: 1.2;    /* better readability */
 }
 
-/* 4. Space out your buttons too */
+/* Space out your buttons too */
 .video-upload form input[type="submit"],
 .video-upload form input[type="reset"] {
     margin-right: 1rem;
@@ -244,8 +256,8 @@ body { font-family: system-ui, sans-serif; }
 }
 
 .loader {
-    border: 10px solid #f3f3f3; /* Light grey */
-    border-top: 10px solid var(--accent); /* Blue */
+    border: 10px solid #f3f3f3; 
+    border-top: 10px solid var(--accent); 
     border-radius: 50%;
     width: 80px;
     height: 80px;

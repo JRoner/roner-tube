@@ -5,7 +5,6 @@ package web
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/google/uuid"
 	"html/template"
 	"io"
 	"log"
@@ -18,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const TemplatesDir = "internal/web/templates/"
@@ -219,6 +220,10 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
+	// Set the working dir to temp for windows
+	cmd.Dir = temp
+
 	if err := cmd.Run(); err != nil {
 		log.Println("Upload error: ffmpeg failed:", err)
 		http.Error(w, "Upload error", http.StatusInternalServerError)
