@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RonerTube</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="logo">RonerTube</div>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/search">Search</a></li>
+    <li><a href="/upload-page">Upload</a></li>
+    <li><a href="/settings">Settings</a></li>
+  </ul>
+  <button class="nav-toggle" aria-label="toggle navigation">
+    <span class="hamburger"></span>
+  </button>
+</nav>
+<div class="video-upload">
+  <form class="video-upload" action="/upload" method="post" enctype="multipart/form-data">
+    <label>
+      Upload an mp4 video:
+      <input type="file" name="file" accept="video/mp4" required />
+    </label>
+    <label>
+      Upload a thumbnail:
+      <input type="file" name="thumbnail" accept="image/jpg" />
+    </label>
+    <label>
+      Enter a title:
+      <input type="text" name="title" required/>
+    </label>
+    <label>
+      Enter a description:
+      <textarea rows="4"></textarea>
+    </label>
+    <div class="upload-buttons">
+      <input type="submit" id="submit-button" value="Upload" />
+      <input type="reset" value="Cancel">
+    </div>
+    <div class="uploading">
+      <p id="upload-text">Uploading Video... Please Wait...</p>
+      <div class="loader"></div>
+    </div>
+  </form>
+</div>
+<script src="/static/script.js"></script>
+</body>
+</html>

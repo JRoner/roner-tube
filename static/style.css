@@ -109,11 +109,14 @@ body { font-family: system-ui, sans-serif; }
         width: 200px;
         padding: 1rem;
         box-shadow: -2px 2px 8px var(--shadow);
+        display: none;
         transform: translateX(100%);
         transition: transform 0.3s ease-in-out;
+
     }
     .nav-links.open {
         transform: translateX(0);
+        display: inline-flex;
     }
 }
 
@@ -257,5 +260,41 @@ body { font-family: system-ui, sans-serif; }
 
 
 /* ------------------------------------------------- */
+.video-display{
+    width: fit-content;
+    max-width: 90vw;
+    margin-inline: auto;
+}
 
+#dashPlayer {
+    height: 75vh;
+    width: auto;
+    max-width: 100%;
+}
 
+/* ------------------------------------------------- */
+
+.side-bar{
+    width: 20dvw;
+    height: calc(100dvh - var(--nav-height));
+    min-width: fit-content;
+    padding: 4rem 1rem;
+    border: 2px solid #333333;
+}
+
+.side-menu{
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2.2rem;
+    width: 100%;
+    height: fit-content;
+}
+
+.side-menu a {
+    width: 100%;
+    color: var(--text-color);
+    background: var(--accent);
+    border-radius: 0.5rem;
+    padding: 1rem 1rem 1rem 1rem;
+}

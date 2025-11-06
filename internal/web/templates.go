@@ -4,7 +4,7 @@ const indexHTML = `
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RonerTube</title>
 	<link rel="stylesheet" href="/static/style.css">
   </head>
@@ -44,7 +44,7 @@ const uploadpageHTML = `
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RonerTube</title>
 	<link rel="stylesheet" href="/static/style.css">
   </head>
@@ -98,7 +98,48 @@ const videoHTML = `
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{.Title}} - RonerTube</title>
+	<link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+	
+  </head>
+  <body>
+	<nav class="navbar">
+		<div class="logo">RonerTube</div>
+  			<ul class="nav-links">
+			<li><a href="/">Home</a></li>
+			<li><a href="/search">Search</a></li>
+    		<li><a href="/upload-page">Upload</a></li>
+    		<li><a href="/settings">Settings</a></li>
+  		</ul>
+  		<button class="nav-toggle" aria-label="toggle navigation">
+    		<span class="hamburger"></span>
+  		</button>
+	</nav>
+	<div class="video-display">
+    	<h1>{{.Title}}</h1>
+		<p>Uploaded at: {{.UploadedAt}}</p>
+
+		<video id="dashPlayer" controls style="width: 640px; height: 360px"></video>
+
+		<script> 
+			var url = "/content/{{.Id}}/manifest.mpd"; 
+			var player = dashjs.MediaPlayer().create(); 
+			player.initialize(document.querySelector("#dashPlayer"), url, false); 
+		</script>
+
+    	<p><a href="/">Back to Home</a></p>
+	</div>
+  </body>
+</html>
+`
+
+const settingsHTML = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{.Title}} - RonerTube</title>
 	<link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
@@ -116,17 +157,8 @@ const videoHTML = `
     		<span class="hamburger"></span>
   		</button>
 	</nav>
-    <h1>{{.Title}}</h1>
-	  <p>Uploaded at: {{.UploadedAt}}</p>
 
-    <video id="dashPlayer" controls style="width: 640px; height: 360px"></video>
-    <script>
-      var url = "/content/{{.Id}}/manifest.mpd";
-      var player = dashjs.MediaPlayer().create();
-      player.initialize(document.querySelector("#dashPlayer"), url, false);
-    </script>
-
-    <p><a href="/">Back to Home</a></p>
+	<p>Settings Page</p>
   </body>
 </html>
 `

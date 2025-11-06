@@ -20,6 +20,8 @@ import (
 	"time"
 )
 
+const TemplatesDir = "internal/web/templates/"
+
 type Server struct {
 	Addr string
 	Port int
@@ -76,12 +78,19 @@ func (s *Server) Start(lis net.Listener) error {
 	s.mux.HandleFunc("/content/", s.handleVideoContent)
 	s.mux.HandleFunc("/", s.handleIndex)
 	s.mux.HandleFunc("/upload-page", s.handleUploadPage)
+	s.mux.HandleFunc("/settings", s.handleSettingsPage)
 
 	return http.Serve(lis, s.mux)
 }
 
+func parseFile(file string) *template.Template {
+	return template.Must(template.ParseFiles(TemplatesDir + file))
+
+}
+
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.New("templates").Parse(indexHTML))
+	//tmpl := template.Must(template.New("templates").Parse(indexHTML))
+	tmpl := parseFile("index.html")
 
 	videos, err := s.metadataService.List()
 	if err != nil {
@@ -109,7 +118,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.New("templates").Parse(uploadpageHTML))
+	tmpl := parseFile("upload.html")
 
 	// use s to read stored files?
 	if err := tmpl.Execute(w, nil); err != nil {
@@ -292,7 +301,7 @@ func (s *Server) handleVideo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl := template.Must(template.New("templates").Parse(videoHTML))
+	tmpl := parseFile("video.html")
 
 	var vid Video
 	video, err := s.metadataService.Read(videoId)
@@ -341,5 +350,14 @@ func (s *Server) handleVideoContent(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(data)
 	if err != nil {
 		log.Println("Error writing data to response:", err)
+	}
+}
+
+func (s *Server) handleSettingsPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := parseFile("settings.html")
+
+	if err := tmpl.Execute(w, nil); err != nil {
+		http.Error(w, "Template Error", http.StatusInternalServerError)
+		return
 	}
 }

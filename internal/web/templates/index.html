@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RonerTube</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">RonerTube</div>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/search">Search</a></li>
+      <li><a href="/upload-page">Upload</a></li>
+      <li><a href="/settings">Settings</a></li>
+    </ul>
+    <button class="nav-toggle" aria-label="toggle navigation">
+      <span class="hamburger"></span>
+    </button>
+  </nav>
+  <div class="videos-home">
+    <ul class="video-links">
+      {{range .}}
+      <li>
+        <a href="/videos/{{.EscapedId}}">
+          <img src="/thumbnails/{{.EscapedId}}.jpg">
+          <div class="video-title">{{.Title}}</div>
+        </a>
+      </li>
+      {{else}}
+      <li>No videos uploaded yet.</li>
+      {{end}}
+    </ul>
+  </div>
+  <script src="/static/script.js"></script>
+</body>
+</html>
