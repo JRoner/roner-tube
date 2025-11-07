@@ -81,12 +81,13 @@ func main() {
 		CREATE TABLE metadata (
        	id TEXT PRIMARY KEY,
        	uploaded_at TEXT NOT NULL,
-       	title TEXT NOT NULL
+       	title TEXT NOT NULL,
+		jit INTEGER NOT NULL
      );`
 		_, err := db.Exec(createTableCommand)
 		if err != nil {
 			db.Close()
-			log.Printf("failed to create students table: %s", err)
+			log.Printf("failed to create sql table: %s", err)
 			return
 		}
 		fmt.Println("Database and table created successfully.")
@@ -127,6 +128,7 @@ func main() {
 	defer lis.Close()
 
 	fmt.Println("Starting web server on", listenAddr)
+	fmt.Println("PID: ", os.Getegid())
 	err = server.Start(lis)
 	if err != nil {
 		fmt.Println("Error starting server:", err)
