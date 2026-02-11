@@ -1,5 +1,3 @@
-// Lab 7: Implement a web server
-
 package web
 
 import (

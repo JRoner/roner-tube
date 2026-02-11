@@ -1,5 +1,3 @@
-// Lab 7: Implement a SQLite video metadata service
-
 package web
 
 import (
