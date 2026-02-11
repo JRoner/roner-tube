@@ -16,7 +16,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -46,17 +45,6 @@ type Video struct {
 	UploadedAt string
 	Title      string
 }
-
-type transcodeJob struct {
-	cmd    *exec.Cmd
-	outDir string
-	// lastHit time.Time
-}
-
-var (
-	jobsMu sync.Mutex
-	jobs   = map[string]*transcodeJob{}
-)
 
 func generateUID() string {
 
@@ -236,15 +224,10 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	// Set the working dir to temp for windows
 	cmd.Dir = temp
 
-	jit := 0
-	if r.FormValue("transcoding-check") != "on" {
-		if err := cmd.Run(); err != nil {
-			log.Println("Upload error: ffmpeg failed:", err)
-			http.Error(w, "Upload error", http.StatusInternalServerError)
-			return
-		}
-	} else {
-		jit = 1
+	if err := cmd.Run(); err != nil {
+		log.Println("Upload error: ffmpeg failed:", err)
+		http.Error(w, "Upload error", http.StatusInternalServerError)
+		return
 	}
 
 	//thumbfile, thumbhdr, err := r.FormFile("thumbnail")
@@ -282,15 +265,12 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		// if filepath.Ext(path) != ".mp4" -- use if dont want to save mp4
-		fileName := filepath.Base(path)
-		if filepath.Ext(path) == ".mp4" {
-			fileName = "source.mp4"
-		}
-		err = s.contentService.Write(id, fileName, data)
-		if err != nil {
-			log.Println("Failed to write to content service:", err)
-			return err
+		if filepath.Ext(path) != ".mp4" {
+			err = s.contentService.Write(id, filepath.Base(path), data)
+			if err != nil {
+				log.Println("Failed to write to content service:", err)
+				return err
+			}
 		}
 
 		return nil
@@ -302,7 +282,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//record the metadata, make sure we don't fail
-	if err := s.metadataService.Create(id, currentTime, title, jit); err != nil {
+	if err := s.metadataService.Create(id, currentTime, title); err != nil {
 		http.Error(w, "Failed to create metadata", http.StatusInternalServerError)
 		return
 	}
@@ -315,13 +295,13 @@ func (s *Server) handleVideo(w http.ResponseWriter, r *http.Request) {
 	videoId := r.URL.Path[len("/videos/"):]
 	log.Println("Video ID:", videoId)
 
-	video, err := s.metadataService.Read(videoId)
+	data, err := s.metadataService.Read(videoId)
 	if err != nil {
 		log.Println("Failed to read metadata:", err)
 		http.Error(w, "Failed to read metadata", http.StatusInternalServerError)
 		return
 	}
-	if video == nil {
+	if data == nil {
 		http.Error(w, "Video not found", http.StatusNotFound)
 		return
 	}
@@ -329,6 +309,11 @@ func (s *Server) handleVideo(w http.ResponseWriter, r *http.Request) {
 	tmpl := parseFile("video.html")
 
 	var vid Video
+	video, err := s.metadataService.Read(videoId)
+	if err != nil {
+		http.Error(w, "Failed to read metadata", http.StatusInternalServerError)
+		return
+	}
 
 	vid.Id = videoId
 	vid.UploadedAt = video.UploadedAt.Format("2006-01-02 15:04:05")
@@ -353,54 +338,6 @@ func (s *Server) handleVideoContent(w http.ResponseWriter, r *http.Request) {
 	filename := parts[1]
 	log.Println("Video ID:", videoId, "Filename:", filename)
 
-	masterPath := filepath.Join(s.contentService.GetFilePath(), videoId, "source.mp4")
-
-	videoMeta, err := s.metadataService.Read(videoId)
-	if err != nil {
-		http.Error(w, "Failed to fetch metadata", http.StatusInternalServerError)
-		return
-	}
-
-	if videoMeta.Jit == 1 {
-		if filename == "manifest.mpd" {
-			job, err := s.startDashJob(videoId, masterPath)
-			if err != nil {
-				http.Error(w, "Transcoder error", http.StatusInternalServerError)
-				return
-			}
-
-			// Wait until MPD exists (FFmpeg writes almost immediately)
-			mpdPath := filepath.Join(job.outDir, "manifest.mpd")
-
-			for i := 0; i < 40 && !fileExists(mpdPath); i++ {
-				time.Sleep(50 * time.Millisecond)
-			}
-
-			// serve the generated MPD file directly from disk for JIT
-			http.ServeFile(w, r, mpdPath)
-			return
-		}
-
-		jobsMu.Lock()
-		job := jobs[videoId]
-		jobsMu.Unlock()
-		if job == nil {
-			// Player asked a segment before manifest bootstrapped — nudge by ensuring job and 404; player will retry.
-			_, _ = s.startDashJob(videoId, masterPath)
-			http.NotFound(w, r)
-			return
-		}
-
-		segPath := filepath.Join(job.outDir, filename)
-		if !fileExists(segPath) {
-			http.NotFound(w, r)
-			return
-		}
-		// serve the generated segment directly from disk for JIT
-		http.ServeFile(w, r, segPath)
-		return
-	}
-
 	data, err := s.contentService.Read(videoId, filename)
 	if err != nil {
 		http.Error(w, "Failed to read content", http.StatusInternalServerError)
@@ -419,65 +356,6 @@ func (s *Server) handleVideoContent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error writing data to response:", err)
 	}
-}
-
-func fileExists(p string) bool {
-	_, err := os.Stat(p)
-	return err == nil
-}
-
-func (s *Server) startDashJob(videoId string, inputPath string) (*transcodeJob, error) {
-	jobsMu.Lock()
-	job, exists := jobs[videoId]
-	if exists {
-		jobsMu.Unlock()
-		return job, nil
-	}
-	jobsMu.Unlock()
-
-	outDir := filepath.Join(s.contentService.GetFilePath(), "temp", videoId)
-	err := os.MkdirAll(outDir, 0755)
-	if err != nil {
-		return nil, err
-	}
-
-	absInput, err := filepath.Abs(inputPath)
-	if err != nil {
-		return nil, err
-	}
-
-	// Start FFmpeg in "live-style" DASH mode
-	mpd := filepath.Join(outDir, "manifest.mpd")
-	absMPD, err := filepath.Abs(mpd)
-	if err != nil {
-		return nil, err
-	}
-
-	cmd := exec.Command("ffmpeg",
-		"-re", "-i", absInput,
-		"-map", "0:v:0", "-map", "0:a:0",
-		"-c:v", "libx264", "-preset", "veryfast", "-b:v", "2500k",
-		"-g", "96", "-keyint_min", "96", "-sc_threshold", "0",
-		"-c:a", "aac", "-b:a", "128k", "-ar", "48000",
-		"-f", "dash", "-streaming", "1", "-seg_duration", "4",
-		"-use_template", "1", "-use_timeline", "1",
-		"-init_seg_name", "init-$RepresentationID$.m4s",
-		"-media_seg_name", "chunk-$RepresentationID$-$Number%05d$.m4s",
-		"-window_size", "30", "-extra_window_size", "5",
-		absMPD,
-	)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	cmd.Dir = outDir
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-
-	job = &transcodeJob{cmd: cmd, outDir: outDir}
-	jobsMu.Lock()
-	jobs[videoId] = job
-	jobsMu.Unlock()
-
-	return job, nil
 }
 
 func (s *Server) handleSettingsPage(w http.ResponseWriter, r *http.Request) {

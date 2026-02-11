@@ -16,10 +16,6 @@ type FSVideoContentService struct {
 // Uncomment the following line to ensure FSVideoContentService implements VideoContentService
 var _ VideoContentService = (*FSVideoContentService)(nil)
 
-func (s *FSVideoContentService) GetFilePath() string {
-	return s.FilePath
-}
-
 func (s *FSVideoContentService) Read(videoId string, filename string) ([]byte, error) {
 	chunkPath := s.FilePath + "/" + videoId + "/" + filename
 
