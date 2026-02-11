@@ -41,9 +41,10 @@ type VideoList struct {
 }
 
 type Video struct {
-	Id         string
-	UploadedAt string
-	Title      string
+	Id          string
+	UploadedAt  string
+	Title       string
+	Description string
 }
 
 func generateUID() string {
@@ -159,8 +160,8 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing title", http.StatusBadRequest)
 	}
 
-	//baseName := hdr.Filename
-	//id := strings.TrimSuffix(baseName, filepath.Ext(baseName)) //Get the file ending (.mp4) and remove it
+	// Set the description for video
+	description := r.FormValue("description")
 
 	id := generateUID()
 
@@ -282,7 +283,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//record the metadata, make sure we don't fail
-	if err := s.metadataService.Create(id, currentTime, title); err != nil {
+	if err := s.metadataService.Create(id, currentTime, title, description); err != nil {
 		http.Error(w, "Failed to create metadata", http.StatusInternalServerError)
 		return
 	}
@@ -318,6 +319,7 @@ func (s *Server) handleVideo(w http.ResponseWriter, r *http.Request) {
 	vid.Id = videoId
 	vid.UploadedAt = video.UploadedAt.Format("2006-01-02 15:04:05")
 	vid.Title = video.Title
+	vid.Description = video.Description
 
 	if err := tmpl.Execute(w, vid); err != nil {
 		http.Error(w, "Template Error", http.StatusInternalServerError)

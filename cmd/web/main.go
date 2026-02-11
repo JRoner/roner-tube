@@ -81,7 +81,8 @@ func main() {
 		CREATE TABLE metadata (
        	id TEXT PRIMARY KEY,
        	uploaded_at TEXT NOT NULL,
-       	title TEXT NOT NULL
+       	title TEXT NOT NULL,
+		description TEXT
      );`
 		_, err := db.Exec(createTableCommand)
 		if err != nil {

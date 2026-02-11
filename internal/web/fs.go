@@ -1,5 +1,3 @@
-// Lab 7: Implement a local filesystem video content service
-
 package web
 
 import (

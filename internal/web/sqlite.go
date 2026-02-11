@@ -5,9 +5,10 @@ package web
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type SQLiteVideoMetadataService struct {
@@ -21,9 +22,10 @@ func (s *SQLiteVideoMetadataService) Read(id string) (*VideoMetadata, error) {
 	var videoID string
 	var uploadedAt string
 	var title string
+	var description string
 
 	row := s.DB.QueryRow("SELECT * FROM metadata WHERE id = ?", id)
-	err := row.Scan(&videoID, &uploadedAt, &title)
+	err := row.Scan(&videoID, &uploadedAt, &title, &description)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
@@ -38,9 +40,10 @@ func (s *SQLiteVideoMetadataService) Read(id string) (*VideoMetadata, error) {
 		return nil, err
 	}
 	videoMetadata := &VideoMetadata{
-		Id:         videoID,
-		UploadedAt: parsedTime,
-		Title:      title,
+		Id:          videoID,
+		UploadedAt:  parsedTime,
+		Title:       title,
+		Description: description,
 	}
 
 	return videoMetadata, nil
@@ -57,9 +60,9 @@ func (s *SQLiteVideoMetadataService) List() ([]VideoMetadata, error) {
 	//loop through the rows
 	for rows.Next() {
 		var video VideoMetadata
-
 		var uploadtime string
-		err = rows.Scan(&video.Id, &uploadtime, &video.Title)
+
+		err = rows.Scan(&video.Id, &uploadtime, &video.Title, &video.Description)
 		if err != nil {
 			log.Printf("Error scanning row: %v", err)
 			return nil, err
@@ -81,8 +84,8 @@ func (s *SQLiteVideoMetadataService) List() ([]VideoMetadata, error) {
 	return videos, nil
 }
 
-func (s *SQLiteVideoMetadataService) Create(videoId string, uploadedAt time.Time, title string) error {
-	_, err := s.DB.Exec("INSERT INTO metadata (id, uploaded_at, title) VALUES (?, ?, ?)", videoId, uploadedAt.Format("2006-01-02 15:04:05"), title)
+func (s *SQLiteVideoMetadataService) Create(videoId string, uploadedAt time.Time, title string, description string) error {
+	_, err := s.DB.Exec("INSERT INTO metadata (id, uploaded_at, title, description) VALUES (?, ?, ?, ?)", videoId, uploadedAt.Format("2006-01-02 15:04:05"), title, description)
 	if err != nil {
 		return err
 	}
