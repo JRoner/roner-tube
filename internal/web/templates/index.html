@@ -8,9 +8,21 @@
 <body>
   <nav class="navbar">
     <div class="logo">RonerTube</div>
+    <form class="searchset" action="/search" method="get">
+      <input type="text" id="searchbar" name="query" placeholder="Search" required>
+      <button type="submit" id="search-button"><img src="/static/assets/search.svg" height="30" width="30" alt="Search" /></button>
+    </form>
+
+    <script>
+      document.addEventListener('invalid', (function () {
+        return function (e) {
+          e.preventDefault();
+          document.getElementById("searchbar").focus();
+        };
+      })(), true);
+    </script>
     <ul class="nav-links">
       <li><a href="/">Home</a></li>
-      <li><a href="/search">Search</a></li>
       <li><a href="/upload-page">Upload</a></li>
       <li><a href="/settings">Settings</a></li>
     </ul>
