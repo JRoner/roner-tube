@@ -264,6 +264,11 @@ body {
     border-radius: 5px;
 }
 
+#radio-buttons {
+    display: flex;
+    gap: 25px;
+}
+
 /* Make each label/input group its own block */
 .video-upload form label {
     display: flex;

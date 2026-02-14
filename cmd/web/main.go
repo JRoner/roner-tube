@@ -77,19 +77,22 @@ func main() {
 	}
 
 	if !dbExists {
-		createTableCommand := `
+		createMetadataTableCommand := `
 		CREATE TABLE metadata (
        	id TEXT PRIMARY KEY,
        	uploaded_at TEXT NOT NULL,
        	title TEXT NOT NULL,
-		description TEXT
-     );`
-		_, err := db.Exec(createTableCommand)
+		description TEXT,
+		media_type TEXT
+     	);`
+
+		_, err := db.Exec(createMetadataTableCommand)
 		if err != nil {
 			db.Close()
-			log.Printf("failed to create students table: %s", err)
+			log.Printf("failed to create metadata table: %s", err)
 			return
 		}
+
 		fmt.Println("Database and table created successfully.")
 	}
 	defer db.Close()

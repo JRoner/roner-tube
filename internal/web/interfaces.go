@@ -7,12 +7,13 @@ type VideoMetadata struct {
 	UploadedAt  time.Time
 	Title       string
 	Description string
+	MediaType   string
 }
 
 type VideoMetadataService interface {
 	Read(id string) (*VideoMetadata, error)
 	List() ([]VideoMetadata, error)
-	Create(videoId string, uploadedAt time.Time, title string, description string) error
+	Create(videoId string, uploadedAt time.Time, title string, description string, mediaType string) error
 }
 
 type VideoContentService interface {

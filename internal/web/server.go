@@ -21,6 +21,8 @@ import (
 
 const TemplatesDir = "internal/web/templates/"
 
+var setOfMediaTypes = []string{"video", "movie", "show"}
+
 type Server struct {
 	Addr string
 	Port int
@@ -152,20 +154,39 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
-	// Set title for video
+	// Get title for video
 	title := r.FormValue("title")
 	if title == "" {
 		http.Error(w, "Missing title", http.StatusBadRequest)
+		return
 	}
 
-	// Set the description for video
+	// Get the description for video
 	description := r.FormValue("description")
 
+	// Get media type for video
+	mediaType := r.FormValue("media-type")
+	mediaType = strings.ToLower(mediaType)
+
+	isPresent := false
+	for _, v := range setOfMediaTypes {
+		if v == mediaType {
+			isPresent = true
+		}
+	}
+
+	if !isPresent {
+		http.Error(w, "Bad media type", http.StatusBadRequest)
+		return
+	}
+
+	// Generate ID
 	id := generateUID()
 
 	// Here we check that the read did not fail and then check that the video does not exist already
 	if existing, err := s.metadataService.Read(id); err != nil {
 		http.Error(w, "Failed to read metadata", http.StatusInternalServerError)
+		log.Println("Failed to verify video ID:", err)
 		return
 	} else if existing != nil {
 		log.Println("Video already exists:", existing)
@@ -281,7 +302,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//record the metadata, make sure we don't fail
-	if err := s.metadataService.Create(id, currentTime, title, description); err != nil {
+	if err := s.metadataService.Create(id, currentTime, title, description, mediaType); err != nil {
 		http.Error(w, "Failed to create metadata", http.StatusInternalServerError)
 		return
 	}
@@ -348,7 +369,15 @@ func (s *Server) handleVideoContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/dash+xml")
+	contentType := "application/octet-stream"
+	switch filepath.Ext(filename) {
+	case ".mpd":
+		contentType = "application/dash+xml"
+	case ".m4s":
+		contentType = "video/iso.segment"
+	}
+
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Disposition", "attachment; filename="+filename)
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.WriteHeader(http.StatusOK)

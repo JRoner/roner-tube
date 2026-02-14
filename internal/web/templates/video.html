@@ -35,7 +35,7 @@
     (function () {
       var url = "/content/{{.Id}}/manifest.mpd";
       var player = dashjs.MediaPlayer().create();
-      player.initialize(document.querySelector("#dashPlayer"), url, true);
+      player.initialize(document.querySelector("#dashPlayer"), url, false);
     })();
   </script>
 </body>

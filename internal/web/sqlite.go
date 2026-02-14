@@ -21,16 +21,17 @@ func (s *SQLiteVideoMetadataService) Read(id string) (*VideoMetadata, error) {
 	var uploadedAt string
 	var title string
 	var description string
+	var mediaType string
 
 	row := s.DB.QueryRow("SELECT * FROM metadata WHERE id = ?", id)
-	err := row.Scan(&videoID, &uploadedAt, &title, &description)
+	err := row.Scan(&videoID, &uploadedAt, &title, &description, &mediaType)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
 	}
 
-	layout := "2006-01-02 15:04:05" // format, saw this on piazza. Might need to change??
+	layout := "2006-01-02 15:04:05"
 
 	parsedTime, err := time.Parse(layout, uploadedAt)
 	if err != nil {
@@ -42,6 +43,7 @@ func (s *SQLiteVideoMetadataService) Read(id string) (*VideoMetadata, error) {
 		UploadedAt:  parsedTime,
 		Title:       title,
 		Description: description,
+		MediaType:   mediaType,
 	}
 
 	return videoMetadata, nil
@@ -60,7 +62,7 @@ func (s *SQLiteVideoMetadataService) List() ([]VideoMetadata, error) {
 		var video VideoMetadata
 		var uploadtime string
 
-		err = rows.Scan(&video.Id, &uploadtime, &video.Title, &video.Description)
+		err = rows.Scan(&video.Id, &uploadtime, &video.Title, &video.Description, &video.MediaType)
 		if err != nil {
 			log.Printf("Error scanning row: %v", err)
 			return nil, err
@@ -82,8 +84,8 @@ func (s *SQLiteVideoMetadataService) List() ([]VideoMetadata, error) {
 	return videos, nil
 }
 
-func (s *SQLiteVideoMetadataService) Create(videoId string, uploadedAt time.Time, title string, description string) error {
-	_, err := s.DB.Exec("INSERT INTO metadata (id, uploaded_at, title, description) VALUES (?, ?, ?, ?)", videoId, uploadedAt.Format("2006-01-02 15:04:05"), title, description)
+func (s *SQLiteVideoMetadataService) Create(videoId string, uploadedAt time.Time, title string, description string, mediaType string) error {
+	_, err := s.DB.Exec("INSERT INTO metadata (id, uploaded_at, title, description, media_type) VALUES (?, ?, ?, ?, ?)", videoId, uploadedAt.Format("2006-01-02 15:04:05"), title, description, mediaType)
 	if err != nil {
 		return err
 	}

@@ -20,6 +20,14 @@
 </nav>
 <div class="video-upload">
   <form class="video-upload" action="/upload" method="post" enctype="multipart/form-data">
+    <legend>Select Media type:</legend>
+    <label for="car-select">Choose a Media Type:</label>
+    <select name="media-type" id="media-type" required>
+      <option value="">--Please choose an option--</option>
+      <option value="video">Video</option>
+      <option value="movie">Movie</option>
+      <option value="show">Show</option>
+    </select>
     <label>
       Upload an mp4 video:
       <input type="file" name="file" accept="video/mp4" required />
